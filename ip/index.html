@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP & Device Info - Dhawal Shah</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a3a52;
+            --primary-light: #2d5f8d;
+            --accent: #ff6b35;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+            --text-dark: #333;
+            --text-light: #555;
+            --border: #e0e0e0;
+        }
+
+        body.dark-mode {
+            --primary: #0f1823;
+            --primary-light: #1a2332;
+            --accent: #00ff96;
+            --bg-light: #0a0e27;
+            --bg-white: #0f1823;
+            --text-dark: #e0e0e0;
+            --text-light: #b8c5d6;
+            --border: #1a2332;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: var(--accent);
+            color: var(--bg-light);
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        /* Main Content */
+        main {
+            padding: 80px 0;
+        }
+
+        h1 {
+            font-size: 36px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        body.dark-mode h1 {
+            color: var(--accent);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 50px;
+            font-size: 16px;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .info-card {
+            background: var(--bg-white);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--accent);
+            transition: all 0.3s;
+            animation: fadeInUp 0.6s ease backwards;
+        }
+
+        .info-card:nth-child(1) { animation-delay: 0.1s; }
+        .info-card:nth-child(2) { animation-delay: 0.2s; }
+        .info-card:nth-child(3) { animation-delay: 0.3s; }
+        .info-card:nth-child(4) { animation-delay: 0.4s; }
+        .info-card:nth-child(5) { animation-delay: 0.5s; }
+        .info-card:nth-child(6) { animation-delay: 0.6s; }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+        }
+
+        body.dark-mode .info-value {
+            color: var(--accent);
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error {
+            background: #fee;
+            border-left: 4px solid #f33;
+            padding: 20px;
+            border-radius: 5px;
+            color: #c33;
+            margin: 20px 0;
+        }
+
+        body.dark-mode .error {
+            background: rgba(255, 51, 51, 0.1);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Map Section */
+        .map-section {
+            margin-top: 50px;
+            padding: 30px;
+            background: var(--bg-white);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .map-section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        body.dark-mode .map-section h2 {
+            color: var(--accent);
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 80px;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Back Button */
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .theme-toggle {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            #map {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">DS</div>
+                <a href="../index-enhanced.html">← Back to Portfolio</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <a href="../index-enhanced.html" class="back-btn">← Back to Portfolio</a>
+
+            <h1>🌍 Your Network Information</h1>
+            <p class="subtitle">Real-time details about your device and network connection</p>
+
+            <div class="info-grid" id="infoGrid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Fetching your information...</p>
+                </div>
+            </div>
+
+            <div class="map-section" id="mapSection" style="display: none;">
+                <h2>📍 Your Location</h2>
+                <div id="map"></div>
+                <p style="margin-top: 15px; color: var(--text-light); font-size: 14px;">
+                    ℹ️ Location is approximate based on IP address geolocation
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Dhawal Shah | <a href="../index-enhanced.html">Back to Portfolio</a></p>
+        </div>
+    </footer>
+
+    <!-- Leaflet Map Library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+    <script>
+        // Dark Mode Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+
+            btn.textContent = body.classList.contains('dark-mode') ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+
+        // Load saved theme
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle').textContent = '☀️ Light Mode';
+            }
+
+            fetchNetworkInfo();
+        });
+
+        // Fetch Network Information
+        async function fetchNetworkInfo() {
+            try {
+                // Get public IP
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                const publicIP = ipData.ip;
+
+                // Get detailed location info
+                const geoResponse = await fetch(`https://ip-api.com/json/${publicIP}?fields=country,city,latitude,longitude,isp,org,timezone`);
+                const geoData = await geoResponse.json();
+
+                // Get browser info
+                const browserInfo = getBrowserInfo();
+
+                displayInfo(publicIP, geoData, browserInfo);
+                displayMap(geoData);
+
+            } catch (error) {
+                console.error('Error fetching info:', error);
+                document.getElementById('infoGrid').innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> Unable to fetch information. Please check your connection and refresh.
+                    </div>
+                `;
+            }
+        }
+
+        // Get Browser Information
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browserName = 'Unknown';
+            let browserVersion = 'Unknown';
+            let osName = 'Unknown';
+
+            // Detect browser
+            if (ua.indexOf('Firefox') > -1) {
+                browserName = 'Firefox';
+                browserVersion = ua.match(/Firefox\/([0-9.]+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Chrome') > -1) {
+                browserName = 'Chrome';
+                browserVersion = ua.match(/Chrome\/([0-9.]+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Safari') > -1) {
+                browserName = 'Safari';
+                browserVersion = ua.match(/Version\/([0-9.]+)/)?.[1] || 'Unknown';
+            } else if (ua.indexOf('Edge') > -1) {
+                browserName = 'Edge';
+                browserVersion = ua.match(/Edge\/([0-9.]+)/)?.[1] || 'Unknown';
+            }
+
+            // Detect OS
+            if (ua.indexOf('Windows') > -1) osName = 'Windows';
+            else if (ua.indexOf('Mac') > -1) osName = 'macOS';
+            else if (ua.indexOf('Linux') > -1) osName = 'Linux';
+            else if (ua.indexOf('iPhone') > -1) osName = 'iOS';
+            else if (ua.indexOf('Android') > -1) osName = 'Android';
+
+            return {
+                browser: `${browserName} ${browserVersion}`,
+                os: osName,
+                screenResolution: `${window.screen.width}x${window.screen.height}`,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+        }
+
+        // Display Information
+        function displayInfo(ip, geo, browser) {
+            const infoCards = [
+                { label: '📡 Public IP', value: ip },
+                { label: '🌐 Country', value: geo.country || 'Unknown' },
+                { label: '🏙️ City', value: geo.city || 'Unknown' },
+                { label: '🔗 ISP', value: geo.isp || 'Unknown' },
+                { label: '🌍 Timezone', value: browser.timezone || 'Unknown' },
+                { label: '⏰ Current Time', value: new Date().toLocaleString() },
+                { label: '🖥️ Browser', value: browser.browser },
+                { label: '💻 OS', value: browser.os },
+                { label: '📺 Screen', value: browser.screenResolution },
+                { label: '🗣️ Language', value: browser.language }
+            ];
+
+            const html = infoCards.map(card => `
+                <div class="info-card">
+                    <div class="info-label">${card.label}</div>
+                    <div class="info-value">${card.value}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('infoGrid').innerHTML = html;
+
+            // Store for map display
+            window.geoData = geo;
+        }
+
+        // Display Map
+        function displayMap(geo) {
+            if (!geo.lat || !geo.lon) return;
+
+            document.getElementById('mapSection').style.display = 'block';
+
+            setTimeout(() => {
+                const map = L.map('map').setView([geo.lat, geo.lon], 10);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                L.marker([geo.lat, geo.lon]).addTo(map)
+                    .bindPopup(`<strong>${geo.city}, ${geo.country}</strong><br>Lat: ${geo.lat}<br>Lon: ${geo.lon}`)
+                    .openPopup();
+            }, 100);
+        }
+    </script>
+</body>
+</html>
